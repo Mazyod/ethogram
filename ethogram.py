@@ -1,5 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
+from telegram import Bot
 from telegram.ext import Updater, CommandHandler
 import os
 
@@ -11,7 +12,11 @@ def hello(bot, update):
 def main():
 
     token = os.environ["TELEGRAM_TOKEN"]
-    assert(token)
+    chat_id = os.environ["TELEGRAM_GROUP_CHAT_ID"]
+    assert(token and chat_id)
+
+    bot = Bot(token)
+    bot.send_message(text="testing, testing, 123", chat_id=chat_id)
 
     updater = Updater(token)
     updater.dispatcher.add_handler(CommandHandler('hello', hello))
