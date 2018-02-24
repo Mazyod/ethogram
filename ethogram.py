@@ -1,41 +1,78 @@
 #!/usr/bin/env python3
 
-from telegram import Bot
-from telegram.ext import Updater, CommandHandler
 import os
 import json
 from urllib.request import urlopen
+from telegram import Bot as TelegramBot
+from telegram.ext import Updater, CommandHandler
 
 
-def hello(bot, update):
-    update.message.reply_text(
-        'Hello {}'.format(update.message.from_user.first_name)
-    )
+class Config:
+    @classmethod
+    def env(cls, key):
+        return os.environ[key]
 
-def prepare_message(rig):
-    return "{rig_name}: {hashrate} H/s".format(
-        rig_name=rig["rack_loc"], hashrate=rig["hash"])
+    @classmethod
+    def telegram_token(cls):
+        return cls.env("TELEGRAM_TOKEN")
+
+    @classmethod
+    def chat_group_id(cls):
+        return cls.env("TELEGRAM_GROUP_CHAT_ID")
+
+    @classmethod
+    def ethos_panel_id(cls):
+        return cls.env("ETHOS_PANEL_ID")
+
+
+class Rig:
+    @classmethod
+    def all(cls):
+        ethos_response_raw = urlopen("http://%s.ethosdistro.com/?json=yes" % (ethos_panel_id))
+        ethos_response = json.loads(ethos_response_raw.read().decode())
+        return [Rig(p) for p in ethos_response["rigs"].values()]
+
+    def __init__(self, payload):
+        self.name = payload["rack_loc"]
+        self.hashrate = payload["hash"]
+
+
+class Bot:
+    INSTANCE = None
+
+    @classmethod
+    def shared(cls):
+        if not cls.INSTANCE:
+            cls.INSTANCE = Bot()
+        return cls.INSTANCE
+
+    def __init__(self):
+        self.telbot = TelegramBot(Config.telegram_token())
+
+        self.commands = [
+            CommandHandler("hashrates", lambda *_: self.send_hashrates()),
+        ]
+
+    def send_message(self, text):
+        self.telbot.send_message(text=text, chat_id=Config.chat_group_id())
+
+    def send_hashrates(self):
+        text = []
+        for rig in Rig.all():
+            text.append("{name}: {hrate} H/s".format(
+                name=rig.name, hrate=rig.hashrate))
+        text = "\n".join(text)
+        self.send_message(text)
 
 def main():
 
-    token = os.environ["TELEGRAM_TOKEN"]
-    chat_id = os.environ["TELEGRAM_GROUP_CHAT_ID"]
-    ethos_panel_id = os.environ["ETHOS_PANEL_ID"]
-    assert(token and chat_id)
+    bot = Bot.shared()
+    bot.send_message(text="ethogram bot launched!")
 
-    ethos_response_raw = urlopen("http://%s.ethosdistro.com/?json=yes" % (ethos_panel_id))
-    ethos_response = json.loads(ethos_response_raw.read().decode())
+    updater = Updater(Config.telegram_token())
+    [updater.dispatcher.add_handler(c) for c in bot.commands]
 
-    message = []
-    for rig in ethos_response["rigs"].values():
-        message.append(prepare_message(rig))
-
-    bot = Bot(token)
-    bot.send_message(text="\n".join(message), chat_id=chat_id)
-
-    updater = Updater(token)
-    updater.dispatcher.add_handler(CommandHandler('hello', hello))
-    updater.start_polling()
+    updater.start_polling(poll_interval=1)
     updater.idle()
 
 
