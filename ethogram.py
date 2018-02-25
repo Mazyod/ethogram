@@ -4,8 +4,9 @@ import os
 import json
 from urllib.request import urlopen
 from telegram import Bot as TelegramBot
+from telegram import ParseMode
 from telegram.ext import Updater, CommandHandler
-
+from tabulate import tabulate
 
 class Config:
     @classmethod
@@ -25,6 +26,12 @@ class Config:
         return cls.env("ETHOS_PANEL_ID")
 
 
+class Util:
+    @classmethod
+    def range_from_string_seq(cls, string):
+        nums = [int(s) for s in string.split(" ")]
+        return "{min} - {max}".format(min=min(nums), max=max(nums))
+
 class Rig:
     @classmethod
     def all(cls):
@@ -35,6 +42,17 @@ class Rig:
     def __init__(self, payload):
         self.name = payload["rack_loc"]
         self.hashrate = payload["hash"]
+        self.gpu_temps = Util.range_from_string_seq(payload["temp"])
+
+    def row(self, included=["hashrate", "gpu_temps"]):
+        row = [self.name]
+
+        if "hashrate" in included:
+            row.append(str(self.hashrate) + " H/s")
+        if "gpu_temps" in included:
+            row.append(str(self.gpu_temps) + " C")
+
+        return row
 
 
 class Bot:
@@ -50,25 +68,40 @@ class Bot:
         self.telbot = TelegramBot(Config.telegram_token())
 
         self.commands = [
+            CommandHandler("all_stats", lambda *_: self.send_all_stats()),
             CommandHandler("hashrates", lambda *_: self.send_hashrates()),
+            CommandHandler("gpu_temps", lambda *_: self.send_gpu_temps()),
         ]
 
-    def send_message(self, text):
-        self.telbot.send_message(text=text, chat_id=Config.chat_group_id())
+    def send_table(self, table):
+        text = str(tabulate(table))
+        self.send_message(text, code=True)
+
+    def send_message(self, text, code=False):
+        text = "```\n" + text + "\n``` ." if code else text
+        self.telbot.send_message(
+            text=text, chat_id=Config.chat_group_id(),
+            parse_mode=ParseMode.MARKDOWN)
 
     def send_hashrates(self):
         print("hashrates requested...")
-        text = []
-        for rig in Rig.all():
-            text.append("{name}: {hrate} H/s".format(
-                name=rig.name, hrate=rig.hashrate))
-        text = "\n".join(text)
-        self.send_message(text)
+        table = [r.row(included=["hashrate"]) for r in Rig.all()]
+        self.send_table(table)
+
+    def send_gpu_temps(self):
+        print("gpu temps requested...")
+        table = [r.row(included=["gpu_temps"]) for r in Rig.all()]
+        self.send_table(table)
+
+    def send_all_stats(self):
+        print("all stats requested...")
+        table = [r.row() for r in Rig.all()]
+        self.send_table(table)
 
 def main():
 
     bot = Bot.shared()
-    bot.send_message(text="ethogram bot launched!")
+    bot.send_all_stats()
 
     updater = Updater(Config.telegram_token())
     [updater.dispatcher.add_handler(c) for c in bot.commands]
