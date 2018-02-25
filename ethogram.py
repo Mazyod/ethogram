@@ -28,7 +28,7 @@ class Config:
 class Rig:
     @classmethod
     def all(cls):
-        ethos_response_raw = urlopen("http://%s.ethosdistro.com/?json=yes" % (ethos_panel_id))
+        ethos_response_raw = urlopen("http://%s.ethosdistro.com/?json=yes" % (Config.ethos_panel_id()))
         ethos_response = json.loads(ethos_response_raw.read().decode())
         return [Rig(p) for p in ethos_response["rigs"].values()]
 
@@ -57,6 +57,7 @@ class Bot:
         self.telbot.send_message(text=text, chat_id=Config.chat_group_id())
 
     def send_hashrates(self):
+        print("hashrates requested...")
         text = []
         for rig in Rig.all():
             text.append("{name}: {hrate} H/s".format(
@@ -72,7 +73,7 @@ def main():
     updater = Updater(Config.telegram_token())
     [updater.dispatcher.add_handler(c) for c in bot.commands]
 
-    updater.start_polling(poll_interval=1)
+    updater.start_polling()
     updater.idle()
 
 
