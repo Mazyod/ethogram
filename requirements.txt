@@ -1,1 +1,2 @@
 python-telegram-bot==9.0.0
+tabulate==0.8.2
