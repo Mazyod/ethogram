@@ -59,7 +59,7 @@ class Rig:
         self.hashrate = payload["hash"]
         self.gpu_temps = Util.range_from_string_seq(payload["temp"])
 
-        update_delta = datetime.now() - datetime.utcfromtimestamp(payload["server_time"])
+        update_delta = datetime.utcnow() - datetime.utcfromtimestamp(payload["server_time"])
         self.timestamp = "{update} {boot} {mine}".format(
             update=Util.time_ago(update_delta.seconds),
             boot=Util.time_ago(payload["uptime"]),
@@ -103,7 +103,7 @@ class Bot:
         self.send_message(text, code=True)
 
     def send_message(self, text, code=False):
-        text = "```\n" + text + "\n``` ." if code else text
+        text = "```\n" + text + "\n```" if code else text
         self.telbot.send_message(
             text=text, chat_id=Config.chat_group_id(),
             parse_mode=ParseMode.MARKDOWN)
