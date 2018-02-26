@@ -42,11 +42,11 @@ class Monitor:
             for old_met, new_met in zip(old_rig.all_metrics(), new_rig.all_metrics()):
                 alert = new_met.alert(old_met)
                 if alert:
-                    alerts.append(alert)
-                    row.append(str(metric))
+                    alerts.append(new_rig.name + ": " + alert)
+                    row.append(str(new_met))
             if row:
                 row = [new_rig.name] + row
-                all_rows += row
+                all_rows.append(row)
 
         if all_rows:
             bot = Bot.shared()
