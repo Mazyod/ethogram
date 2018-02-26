@@ -2,6 +2,7 @@
 
 import os
 import json
+from datetime import datetime
 from urllib.request import urlopen
 from telegram import Bot as TelegramBot
 from telegram import ParseMode
@@ -32,6 +33,20 @@ class Util:
         nums = [int(s) for s in string.split(" ")]
         return "{min} - {max}".format(min=min(nums), max=max(nums))
 
+    @classmethod
+    def time_ago(cls, timestamp):
+        s = int(timestamp)
+        days, remainder = divmod(s, 24 * 60 * 60)
+        hours, remainder = divmod(remainder, 60 * 60)
+        minutes, seconds = divmod(remainder, 60)
+
+        if days >= 1:
+            return str(days) + "d"
+        if hours >= 1:
+            return str(hours) + "h"
+
+        return str(minutes) + "m"
+
 class Rig:
     @classmethod
     def all(cls):
@@ -44,13 +59,22 @@ class Rig:
         self.hashrate = payload["hash"]
         self.gpu_temps = Util.range_from_string_seq(payload["temp"])
 
-    def row(self, included=["hashrate", "gpu_temps"]):
+        update_delta = datetime.now() - datetime.utcfromtimestamp(payload["server_time"])
+        self.timestamp = "{update} {boot} {mine}".format(
+            update=Util.time_ago(update_delta.seconds),
+            boot=Util.time_ago(payload["uptime"]),
+            mine=Util.time_ago(payload["miner_secs"])
+        )
+
+    def row(self, included=["timestamp", "hashrates", "gpu_temps"]):
         row = [self.name]
 
-        if "hashrate" in included:
+        if "hashrates" in included:
             row.append(str(self.hashrate) + " H/s")
         if "gpu_temps" in included:
             row.append(str(self.gpu_temps) + " C")
+        if "timestamp" in included:
+            row.append(str(self.timestamp))
 
         return row
 
@@ -71,6 +95,7 @@ class Bot:
             CommandHandler("all_stats", lambda *_: self.send_all_stats()),
             CommandHandler("hashrates", lambda *_: self.send_hashrates()),
             CommandHandler("gpu_temps", lambda *_: self.send_gpu_temps()),
+            CommandHandler("timestamp", lambda *_: self.send_timestamp()),
         ]
 
     def send_table(self, table):
@@ -83,9 +108,14 @@ class Bot:
             text=text, chat_id=Config.chat_group_id(),
             parse_mode=ParseMode.MARKDOWN)
 
+    def send_timestamp(self):
+        print("timestamp requested...")
+        table = [r.row(included=["timestamp"]) for r in Rig.all()]
+        self.send_table(table)
+
     def send_hashrates(self):
         print("hashrates requested...")
-        table = [r.row(included=["hashrate"]) for r in Rig.all()]
+        table = [r.row(included=["hashrates"]) for r in Rig.all()]
         self.send_table(table)
 
     def send_gpu_temps(self):
