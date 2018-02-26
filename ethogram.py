@@ -118,6 +118,8 @@ class HashrateMetric:
         return "{} H/s".format(self.hashrate)
 
     def alert(self, old_metric):
+        if old_metric.hashrate <= 0.01:
+            return None
         if (self.hashrate / old_metric.hashrate) < 0.9:
             return "Hashrate dropped!"
         if (self.hashrate / old_metric.hashrate) > 1.1:
