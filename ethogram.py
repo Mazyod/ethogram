@@ -23,8 +23,12 @@ class Scheduler:
     @classmethod
     def run(cls, callback):
         while True:
-            callback()
-            time.sleep(5 * 60)
+            try:
+                callback()
+                time.sleep(5 * 60)
+            except Exception as e:
+                print(e)
+                time.sleep(5)
 
 
 class Monitor:
