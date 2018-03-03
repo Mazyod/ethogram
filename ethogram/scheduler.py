@@ -26,5 +26,9 @@ class Scheduler:
 
     def run(self):
         while self.running:
-            self.callback()
-            time.sleep(self.interval)
+            try:
+                self.callback()
+                time.sleep(self.interval)
+            except Exception as e:
+                print(e)
+                time.sleep(self.interval * 0.1)
