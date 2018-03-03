@@ -2,21 +2,20 @@
 Wrapper around TelegramBot, with convenient behaviours
 """
 
-from collections import defaultdict
 from telegram import Bot as TelegramBot
 from telegram import ParseMode
 from telegram.ext import CommandHandler
 from tabulate import tabulate
 from .monitor import Monitor
 from .network import Network
+from .config import Config
 
 
 class Bot:
     TELEGRAM_BOT = TelegramBot(Config.telegram_token())
 
-    def __init__(self, chat_id):
-        self.chat_id = chat_id
-        self.monitors = defaultdict(lambda: Monitor(Network(), self))
+    def __init__(self):
+        self.monitors = {}
 
         self.commands = [
             # bot level
@@ -29,23 +28,23 @@ class Bot:
             CommandHandler("timestamp", lambda *args: self.timestamp(*args)),
         ]
 
-    def send_table(self, table):
+    def send_table(self, chat_id, table):
         text = str(tabulate(table))
-        self.send_message(text, code=True)
+        self.send_message(text, chat_id, code=True)
 
-    def send_message(self, text, code=False):
+    def send_message(self, text, chat_id, code=False):
         text = "```\n" + text + "\n```" if code else text
         Bot.TELEGRAM_BOT.send_message(
             text=text,
-            chat_id=self.chat_id,
+            chat_id=chat_id,
             parse_mode=ParseMode.MARKDOWN)
 
-    def send_stats_for_chat(chat_id, included=[]):
+    def send_stats_for_chat(self, chat_id, included=[]):
         included = included or ["timestamp", "hashrate", "gpu_temps"]
-        monitor = self.monitors[chat_id]
-        if not monitor.panels:
+        monitor = self.monitors.get(chat_id)
+        if not monitor or not monitor.panels:
             error = "Get started by calling /start [panel_id]"
-            return self.send_message(error)
+            return self.send_message(error, chat_id)
 
         monitor.send_stats(included)
 
@@ -53,22 +52,27 @@ class Bot:
     # actions
 
     def start(self, bot, update):
-        panel = update.effective_message.text or ""
-        if len(panel) != 6:
+        cmd = update.effective_message.text.split(" ")
+        if len(cmd) < 2 or len(cmd[1]) != 6:
             update.message.reply_text("please provide 6 character panel id")
             return
 
-        monitor = self.monitors[update.effective_chat.id]
-        monitor.panels.append(panel)
+        chat_id = update.effective_chat.id
+        if chat_id not in self.monitors:
+            self.monitors[chat_id] = Monitor(chat_id, Network(), self)
+
+        monitor = self.monitors[chat_id]
+        monitor.panels.append(cmd[1])
         update.message.reply_text("Monitoring: " + repr(monitor.panels))
 
     def stop(self, bot, update):
-        panel = update.effective_message.text or ""
-        if len(panel) != 6:
+        cmd = update.effective_message.text.split(" ")
+        if len(cmd) < 2 or len(cmd[1]) != 6:
             update.message.reply_text("please provide 6 character panel id")
             return
 
         monitor = self.monitors[update.effective_chat.id]
+        panel = cmd[1]
         if panel in monitor.panels:
             monitor.panels.remove(panel)
             update.message.reply_text("Stopped monitoring: " + panel)
@@ -89,6 +93,6 @@ class Bot:
 
     # scheduler
 
-    def update():
+    def update(self):
         for monitor in self.monitors.values():
             monitor.update()

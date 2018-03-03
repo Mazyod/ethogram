@@ -7,7 +7,8 @@ from .network import Network
 
 
 class Monitor:
-    def __init__(self, network: Network, bot):
+    def __init__(self, chat_id, network, bot):
+        self.chat_id = chat_id
         self.network = network
         self.bot = bot
         self.panels = []
@@ -31,7 +32,7 @@ class Monitor:
     def send_stats(self, included):
         print("stats requested: " + repr(included))
         table = [r.row(included) for r in self.fetch_rigs()]
-        self.bot.send_table(table)
+        self.bot.send_table(table, self.chat_id)
 
     # scheduler
 
@@ -63,8 +64,8 @@ class Monitor:
                 all_rows.append(row)
 
         if all_rows:
-            self.bot.send_table(all_rows)
+            self.bot.send_table(all_rows, self.chat_id)
         if alerts:
-            self.bot.send_message("\n".join(alerts))
+            self.bot.send_message("\n".join(alerts), self.chat_id)
 
         self.rigs = new_rigs
