@@ -8,7 +8,7 @@ from telegram.ext import Updater
 
 def main():
     logFormat = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    logging.basicConfig(level=logging.DEBUG, format=logFormat)
+    logging.basicConfig(level=logging.INFO, format=logFormat)
 
     bot = Bot()
     scheduler = Scheduler(4 * 60, bot.update)
