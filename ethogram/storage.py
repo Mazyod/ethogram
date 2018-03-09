@@ -19,7 +19,7 @@ class Storage:
 
     def write_contents(self, obj):
         dirname = os.path.dirname(self.filepath)
-        if not os.path.exists(dirname):
+        if dirname and not os.path.exists(dirname):
             os.makedirs(dirname)
 
         with open(self.filepath, "w+") as f:
