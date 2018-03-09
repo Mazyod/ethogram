@@ -9,15 +9,22 @@ from tabulate import tabulate
 from .monitor import Monitor
 from .network import Network
 from .config import Config
+from .storage import Storage
 
 
 class Bot:
     TELEGRAM_BOT = TelegramBot(Config.telegram_token())
 
-    def __init__(self):
+    def __init__(self, network=None, storage=None):
         self.monitors = {}
+        self.network = network or Network()
+        self.storage = storage or Storage("monitors.json")
 
-        self.commands = [
+        self.load_existing_monitors()
+
+    @property
+    def commands(self):
+        return [
             # bot level
             CommandHandler("start", lambda *args: self.start(*args)),
             CommandHandler("stop", lambda *args: self.stop(*args)),
@@ -27,6 +34,14 @@ class Bot:
             CommandHandler("gpu_temps", lambda *args: self.gpu_temps(*args)),
             CommandHandler("timestamp", lambda *args: self.timestamp(*args)),
         ]
+
+    def load_existing_monitors(self):
+        obj = self.storage.contents
+        for (chat_id, panels) in obj.items():
+            monitor = Monitor(chat_id, self)
+            monitor.panels = panels
+            self.monitors[chat_id] = monitor
+
 
     def send_table(self, chat_id, table):
         text = str(tabulate(table))
@@ -59,10 +74,12 @@ class Bot:
 
         chat_id = update.effective_chat.id
         if chat_id not in self.monitors:
-            self.monitors[chat_id] = Monitor(chat_id, Network(), self)
+            self.monitors[chat_id] = Monitor(chat_id, self)
 
         monitor = self.monitors[chat_id]
         monitor.panels.append(cmd[1])
+        self.storage.set(chat_id, monitor.panels)
+
         update.message.reply_text("Monitoring: " + repr(monitor.panels))
 
     def stop(self, bot, update):
@@ -71,10 +88,13 @@ class Bot:
             update.message.reply_text("please provide 6 character panel id")
             return
 
-        monitor = self.monitors[update.effective_chat.id]
+        chat_id = update.effective_chat.id
+        monitor = self.monitors[chat_id]
         panel = cmd[1]
         if panel in monitor.panels:
             monitor.panels.remove(panel)
+            self.storage.set(chat_id, monitor.panels)
+
             update.message.reply_text("Stopped monitoring: " + panel)
         else:
             update.message.reply_text("Panel not found: " + repr(monitor.panels))

@@ -7,12 +7,15 @@ from .network import Network
 
 
 class Monitor:
-    def __init__(self, chat_id, network, bot):
+    def __init__(self, chat_id, bot):
         self.chat_id = chat_id
-        self.network = network
         self.bot = bot
         self.panels = []
         self.rigs = []
+
+    @property
+    def network(self):
+        return self.bot.network
 
     def categorized_rigs(self, old_rigs, new_rigs) -> dict:
         lookup = defaultdict(lambda: [])

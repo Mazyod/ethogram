@@ -30,9 +30,9 @@ class MonitorTests(unittest.TestCase):
         })
 
         bot = BotMock()
-        network = NetworkMock()
+        network = bot.network
 
-        monitor = Monitor(network, bot)
+        monitor = Monitor("chat_id", bot)
         monitor.update()
 
         self.assertEqual(bot.tables, [])
@@ -44,7 +44,7 @@ class MonitorTests(unittest.TestCase):
 
         monitor.update()
         self.assertEqual(bot.tables, [])
-        self.assertEqual(bot.messages, ["another has been added!"])
+        self.assertEqual(bot.messages, [("another has been added!", "chat_id")])
         bot.clear()
 
         network.all_rigs["panel"].remove(rig2)
@@ -53,8 +53,8 @@ class MonitorTests(unittest.TestCase):
         monitor.update()
         self.assertEqual(bot.tables, [])
         self.assertEqual(bot.messages, [
-            ("another has been removed"
-            + "\ntesting has been added!")
+            (("another has been removed"
+            + "\ntesting has been added!"), "chat_id")
         ])
         bot.clear()
 
@@ -62,5 +62,7 @@ class MonitorTests(unittest.TestCase):
         network.all_rigs["panel"].append(rig1b)
 
         monitor.update()
-        self.assertEqual(bot.tables, [[["testing", "0s 1m 6m"]]])
-        self.assertEqual(bot.messages, ["testing: Rig seems to have rebooted!"])
+        self.assertEqual(bot.tables, [([["testing", "0s 1m 6m"]], "chat_id")])
+        self.assertEqual(bot.messages, [
+            ("testing: Rig seems to have rebooted!", "chat_id")
+        ])
