@@ -18,16 +18,20 @@ class Storage:
             return json.loads(f.read())
 
     def write_contents(self, obj):
+        dirname = os.path.dirname(self.filepath)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+
         with open(self.filepath, "w+") as f:
             f.write(json.dumps(obj))
 
-    def set(key, value):
+    def set(self, key, value):
         # TODO - thread safety
         store = self.contents
         store[key] = value
         self.write_contents(store)
 
-    def get(key):
+    def get(self, key):
         return self.contents.get(key)
 
     def clear(self):
