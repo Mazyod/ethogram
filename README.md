@@ -1,8 +1,9 @@
 # ethogram
 
-Telegram bot for ethOS!
+Telegram bot for ethOS! Feel free to use it by adding `@ethogramBot` to a group, or chatting with it directly.
 
-:warning: **warning**: If you use ethogram bot now, you will need to set it up again soon, because currently the bot is running without any persistence. So, any restart to the bot process will lose all configurations. Soon, we will add persistence, and reboot the bot. _(ETA 1 week)_
+Since the bot now tracks the chat id's in a file, even if it restarts, we can alert users of downtime, or possible issues with the bot itself by sending status messages (not implemented yet).
+
 
 ## Actions
 
