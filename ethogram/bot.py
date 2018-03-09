@@ -43,7 +43,7 @@ class Bot:
             self.monitors[chat_id] = monitor
 
 
-    def send_table(self, chat_id, table):
+    def send_table(self, table, chat_id):
         text = str(tabulate(table))
         self.send_message(text, chat_id, code=True)
 
