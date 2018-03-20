@@ -47,8 +47,8 @@ class TimestampMetric:
         server_time = datetime.fromtimestamp(payload["server_time"])
 
         self.update_delta = (now - server_time).seconds
-        self.boot_delta = int(payload["uptime"])
-        self.mine_delta = int(payload["miner_secs"])
+        self.boot_delta = int(payload["uptime"] or 0)
+        self.mine_delta = int(payload["miner_secs"] or 0)
 
     def __str__(self):
         deltas = [self.update_delta, self.boot_delta, self.mine_delta]
