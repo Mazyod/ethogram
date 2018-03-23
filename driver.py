@@ -20,8 +20,8 @@ def main():
     scheduler.start()
 
     # TODO - configurable filepaths and listen domain
-    cert_file = "certs/ca.crt"
-    pkey_file = "certs/ca.key"
+    cert_file = "certs/cert.pem"
+    pkey_file = "certs/private.key"
     updater.start_webhook(listen='0.0.0.0',
                           port=config.webhook_port,
                           url_path=config.telegram_token,
