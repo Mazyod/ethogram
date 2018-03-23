@@ -13,9 +13,9 @@ from .storage import Storage
 
 
 class Bot:
-    TELEGRAM_BOT = TelegramBot(Config.telegram_token())
-
     def __init__(self, network=None, storage=None):
+        config = Config()
+        self.telegram_bot = TelegramBot(config.telegram_token)
         self.monitors = {}
         self.network = network or Network()
         self.storage = storage or Storage("monitors.json")
@@ -49,7 +49,7 @@ class Bot:
 
     def send_message(self, text, chat_id, code=False):
         text = "```\n" + text + "\n```" if code else text
-        Bot.TELEGRAM_BOT.send_message(
+        self.telegram_bot.send_message(
             text=text,
             chat_id=chat_id,
             parse_mode=ParseMode.MARKDOWN)
