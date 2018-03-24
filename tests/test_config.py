@@ -5,7 +5,7 @@ from ethogram.config import Config
 
 class ConfigTests(unittest.TestCase):
     
-    def test_fong(self):
+    def test_config(self):
         os.environ["ETHOGRAM_ROOT"] = os.path.dirname(__file__)
 
         config = Config()
