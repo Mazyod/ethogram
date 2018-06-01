@@ -1,6 +1,11 @@
+ethogram.json
+!tests/ethogram.json
+
 monitors.json
 nohup.out
 tmp/
+.idea/
+certs/
 
 # Created by https://www.gitignore.io/api/linux,macos,python
 
