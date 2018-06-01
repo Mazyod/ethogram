@@ -17,10 +17,10 @@ If you'd like to deploy your own version of this bot, please follow this rough g
 - `cd` into the repo root
 - Create `ethogram.json`, as follows:
 ```json
-    {
-      "TELEGRAM_TOKEN": "[YOUR_TELEGRAM_TOKEN_FROM ABOVE]",
-      "WEBHOOK_HOST": "[HOSTNAME_FOR_YOUR_SERVER]"
-    }
+{
+  "TELEGRAM_TOKEN": "[YOUR_TELEGRAM_TOKEN_FROM ABOVE]",
+  "WEBHOOK_HOST": "[HOSTNAME_FOR_YOUR_SERVER]"
+}
 ```
 - Create `certs` directory, and add required SSL files for https webhook support: _(TODO: Add more details)_
   * `cert.pem`
