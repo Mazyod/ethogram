@@ -1,6 +1,8 @@
 # ethogram <img src="https://i.imgur.com/YWMAUVL.png" alt="alt text" width="30" height="30">
 
-Telegram bot for ethOS! Feel free to use it by adding `@ethogramBot` to a group, or chatting with it directly.
+:warning: **This bot is no longer hosted nor maintained.**
+
+Telegram bot for ethOS!
 
 Since the bot now tracks the chat id's in a file, even if it restarts, we can alert users of downtime, or possible issues with the bot itself by sending status messages (not implemented yet).
 
